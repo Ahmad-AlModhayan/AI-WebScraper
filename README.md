@@ -55,7 +55,7 @@ Before using the project, ensure the following are installed:
 3. **Set Up WebDriver**:
 
    - **Edge**: Download [EdgeDriver](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/) and place it in your project directory.
-   - **Chrome**: Download [ChromeDriver](https://chromedriver.chromium.org/downloads) and place it in your project directory.
+   - **Chrome**: Download [ChromeDriver](https://googlechromelabs.github.io/chrome-for-testing/) and place it in your project directory.
 4. **Configure Docker** (optional):
 
    - Build the Docker image:
