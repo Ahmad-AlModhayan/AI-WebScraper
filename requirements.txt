@@ -1,8 +1,5 @@
-streamlit 
-langchain 
-langchain_ollama
+streamlit
 selenium
 beautifulsoup4
-lxml 
-html5lib
-python-dotenv
+llama-cpp-python==3.2.0
+validators

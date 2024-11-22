@@ -1,142 +1,80 @@
+### **Updated README File**
+
+```markdown
 # AI Web Scraper
 
-The **AI Web Scraper** is a powerful, modular, and deployable tool designed to scrape and analyze data from dynamic websites. Using Selenium for scraping and Ollama for AI-powered parsing, this tool serves as a foundational project for collecting real-world data for future applications.
-
----
+AI Web Scraper is a dynamic and intelligent web scraping tool built using Streamlit, Selenium, and Llama 3.2. This tool allows you to scrape dynamic web pages, analyze the extracted content using AI, and perform a variety of tasks like summarization, table extraction, and more.
 
 ## Features
+- **Dynamic Web Scraping**: Handles dynamic websites using Selenium with scrolling and content loading.
+- **Content Cleaning**: Extracts and cleans relevant HTML content with BeautifulSoup.
+- **AI-Powered Parsing**: Analyze scraped content with Llama 3.2 for various text processing tasks.
+- **Streamlit Interface**: User-friendly interface for scraping and content analysis.
+- **Dynamic Selector Support**: Customize scraping by specifying CSS selectors for specific elements.
 
-- **Dynamic Web Scraping**:
-
-  - Handles JavaScript-heavy websites using Selenium.
-  - Supports multiple browsers (Edge and Chrome).
-  - Extracts clean, structured data from web pages.
-- **AI-Powered Parsing**:
-
-  - Integrates with Ollama for natural language understanding and analysis.
-  - Extracts insights based on user-defined queries (e.g., "Summarize this content").
-- **Modular Design**:
-
-  - Separate components for scraping, parsing, and user interaction.
-  - Easily extensible for additional features or new projects.
-- **Deployable Anywhere**:
-
-  - Fully containerized with Docker for consistent performance across environments.
-  - User-friendly interface built with Streamlit for quick interactions.
-
----
-
-## Prerequisites
-
-Before using the project, ensure the following are installed:
-
-- **Python**: Version 3.8 or later
-- **Pip**: For managing Python packages
-- **Selenium**: Included in `requirements.txt`
-- **WebDriver**: Install `msedgedriver` or `chromedriver` depending on your browser
-- **Docker** (optional): For containerization
-- **Ollama**: For AI-based parsing
-
----
+## Requirements
+- Docker (optional for containerized deployment)
+- Python 3.10 or later
 
 ## Installation
+### Step 1: Clone the Repository
+```bash
+git clone https://github.com/<your_username>/ai-web-scraper.git
+cd ai-web-scraper
+```
 
-1. **Clone the Repository**:
+### Step 2: Install Dependencies
+Using pip:
+```bash
+pip install -r requirements.txt
+```
 
-   ```bash
-   git clone https://github.com/your-repo/ai-web-scraper.git
-   cd ai-web-scraper
-   ```
-2. **Install Dependencies**:
+### Step 3: Run the Application
+```bash
+streamlit run app.py
+```
 
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. **Set Up WebDriver**:
+The app will be available at `http://localhost:8501`.
 
-   - **Edge**: Download [EdgeDriver](https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/) and place it in your project directory.
-   - **Chrome**: Download [ChromeDriver](https://googlechromelabs.github.io/chrome-for-testing/) and place it in your project directory.
-4. **Configure Docker** (optional):
+## Containerized Deployment
+### Build the Docker Image
+```bash
+docker build -t ai-web-scraper .
+```
 
-   - Build the Docker image:
-     ```bash
-     docker build -t ai_web_scraper .
-     ```
+### Run the Container
+```bash
+docker run -p 8501:8501 ai-web-scraper
+```
 
----
+Access the app in your browser at `http://localhost:8501`.
 
 ## Usage
+1. **Enter the URL**: Provide the URL of the website to scrape.
+2. **Customize Selectors**: Optionally, specify CSS selectors for dynamic content.
+3. **Scrape and Analyze**:
+   - Scrape the website's content.
+   - Use AI-powered parsing to extract or process specific content.
 
-### Run the Application Locally
+## Example Prompts for Parsing
+- **Extract a Table**: Extract all tables from the HTML content and return them in markdown format.
+- **Extract a List**: Extract all bullet-point lists from the HTML content and return them as plain text.
+- **Summarize**: Summarize the main text content in 100 words.
+- **Find Links**: Extract all hyperlinks (anchor tags) from the HTML and return them as a list.
 
-1. **Run the Streamlit App**:
+## Technologies Used
+- **Streamlit**: Interactive UI for web scraping and analysis.
+- **Selenium**: Dynamic content scraping.
+- **BeautifulSoup**: Content extraction and cleaning.
+- **Llama 3.2**: AI-powered content analysis.
+- **Docker**: Containerized deployment.
 
-   ```bash
-   streamlit run app.py
-   ```
-2. **Open the App**:
-
-   - Access the app in your browser at `http://localhost:8501`.
-3. **Scrape and Parse**:
-
-   - Enter the URL to scrape.
-   - Define a query for parsing (e.g., "Extract all links" or "Summarize content").
-
-### Run with Docker
-
-1. **Start the Docker Container**:
-
-   ```bash
-   docker run -p 8501:8501 ai_web_scraper
-   ```
-2. **Access the App**:
-
-   - Open your browser and go to `http://localhost:8501`.
-
----
-
-## Project Structure
-
-```
-AI_Web_Scraper/
-├── app.py                 # Main Streamlit app
-├── scraper.py             # Web scraping functions
-├── parser.py              # AI-powered content parsing
-├── requirements.txt       # Dependencies
-├── Dockerfile             # Docker setup for deployment
-└── README.md              # Project documentation
-```
-
----
-
-## Example Use Case
-
-1. **Scenario**: Scrape a news website to extract the latest articles.
-2. **Steps**:
-   - Input the news website URL in the app.
-   - Provide a query like "Extract article titles and links."
-   - View the parsed results in the app or download them as a CSV.
-
----
-
-## Future Enhancements
-
-- Add support for more browsers (e.g., Firefox).
-- Integrate additional AI models for enhanced parsing.
-- Create an API endpoint for remote scraping and analysis.
-
----
+## Future Improvements
+- Add support for CAPTCHA bypassing.
+- Enhance error handling and dynamic content scraping for highly complex websites.
 
 ## Contributing
-
-We welcome contributions! To contribute:
-
-1. Fork the repository.
-2. Create a new branch for your feature or bug fix.
-3. Submit a pull request for review.
-
----
+Contributions are welcome! Feel free to submit a pull request or open an issue for suggestions or bug reports.
 
 ## License
-
-This project is licensed under the MIT License. See `LICENSE` for more details.
+This project is licensed under the MIT License.
