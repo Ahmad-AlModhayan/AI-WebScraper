@@ -1,5 +1,3 @@
-### **Updated README File**
-
 # AI Web Scraper
 
 AI Web Scraper is a dynamic and intelligent web scraping tool built using Streamlit, Selenium, and Llama 3.2. This tool allows you to scrape dynamic web pages, analyze the extracted content using AI, and perform a variety of tasks like summarization, table extraction, and more.
