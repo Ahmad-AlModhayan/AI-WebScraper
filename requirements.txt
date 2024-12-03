@@ -30,12 +30,12 @@ pytest==8.0.2
 black==24.2.0
 mypy==1.9.0
 
-# Optional: Advanced Web Interaction
+# Advanced Web Interaction
 playwright==1.42.0
 
-# Optional: Performance and Caching
+# Performance and Caching
 lxml==5.2.1
 redis==5.0.3
 
-# Optional: Security and Encryption
+# Security and Encryption
 cryptography==42.0.5

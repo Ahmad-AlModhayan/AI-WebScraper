@@ -19,31 +19,43 @@ AI Web Scraper is an advanced, multilingual web scraping tool powered by AI, des
 - LangChain
 - Docker
 
-## 📦 Prerequisites
-- Docker
-- Docker Compose
-- Python 3.10+
+## 🚀 Getting Started
 
-## 🚀 Quick Start
+### Prerequisites
+- Python 3.10+
+- Docker (Optional)
+- Git
 
 ### Local Development
+
+#### Windows
+1. Clone the repository
 ```bash
-# Clone the repository
 git clone https://github.com/Ahmad-AlModhayan/AI-WebScraper.git
 cd AI-WebScraper
+```
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+2. Run the startup script
+```bash
+scripts\start.bat
+```
 
-# Install dependencies
-pip install -r requirements.txt
+#### Linux/macOS
+1. Clone the repository
+```bash
+git clone https://github.com/Ahmad-AlModhayan/AI-WebScraper.git
+cd AI-WebScraper
+```
 
-# Run the application
-streamlit run src/app.py
+2. Run the startup script
+```bash
+chmod +x scripts/start.sh
+./scripts/start.sh
 ```
 
 ### Docker Deployment
+
+#### Quick Start
 ```bash
 # Build and run with Docker Compose
 docker-compose up --build
@@ -51,6 +63,22 @@ docker-compose up --build
 # Access the application
 # Open http://localhost:8501 in your browser
 ```
+
+#### Docker Commands
+```bash
+# Build the image
+docker build -t ai-web-scraper .
+
+# Run the container
+docker run -p 8501:8501 ai-web-scraper
+
+# Stop and remove containers
+docker-compose down
+```
+
+### Configuration
+- Modify `.env.example` for custom settings
+- Configure `config/production.yml` and `config/development.yml`
 
 ## 🔧 Configuration
 - `config/production.yml`: Production settings

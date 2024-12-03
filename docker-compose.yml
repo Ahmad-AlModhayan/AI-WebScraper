@@ -11,7 +11,9 @@ services:
       - .:/app
       - ./data:/app/data
       - ./logs:/app/logs
+      - ./config:/app/config
     environment:
+      - PYTHONPATH=/app
       - OLLAMA_HOST=ollama
       - APP_LANGUAGE=ar
       - DEBUG=false
@@ -32,14 +34,6 @@ services:
         limits:
           cpus: '4'
           memory: 8G
-
-  # Optional: Add monitoring or logging service
-  # prometheus:
-  #   image: prom/prometheus
-  #   volumes:
-  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml
-  #   ports:
-  #     - "9090:9090"
 
 volumes:
   ollama_data:

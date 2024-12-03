@@ -7,6 +7,7 @@ ENV PYTHONUNBUFFERED 1
 ENV LANG ar_SA.UTF-8
 ENV LANGUAGE ar_SA
 ENV LC_ALL ar_SA.UTF-8
+ENV PYTHONPATH=/app
 
 # Set the working directory in the container
 WORKDIR /app
@@ -15,7 +16,6 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
-    software-properties-common \
     git \
     locales \
     && rm -rf /var/lib/apt/lists/*
@@ -27,11 +27,10 @@ RUN sed -i '/ar_SA.UTF-8/s/^# //g' /etc/locale.gen \
 # Install Ollama
 RUN curl -fsSL https://ollama.com/install.sh | sh
 
-# Copy the current directory contents into the container at /app
+# Copy project files
 COPY . /app
 
 # Install Python dependencies
-COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install additional ML dependencies
@@ -44,5 +43,8 @@ RUN pip install \
 # Expose the port the app runs on
 EXPOSE 8501
 
+# Create necessary directories
+RUN mkdir -p logs data/cache data/exports
+
 # Set the default command to run the application
-CMD ["streamlit", "run", "src/app.py"]
+CMD ["streamlit", "run", "src/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
