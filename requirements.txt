@@ -1,5 +1,42 @@
-streamlit
-selenium
-beautifulsoup4
-llama-cpp-python==3.2.0
-validators
+# Core Libraries
+streamlit==1.28.2
+selenium==4.15.2
+langchain==0.0.350
+ollama==0.1.5
+chromadb==0.4.18
+sentence-transformers==2.2.2
+
+# Web Scraping
+beautifulsoup4==4.12.2
+fake-useragent==1.2.1
+webdriver-manager==4.0.1
+
+# Data Processing
+pandas==2.1.3
+numpy==1.26.2
+openpyxl==3.1.2
+pyarrow==14.0.1  # For parquet support
+
+# AI and NLP
+transformers==4.35.2
+torch==2.1.1
+accelerate==0.24.1
+
+# Utilities
+python-dotenv==1.0.0
+pyyaml==6.0.1
+validators==0.22.0
+tenacity==8.2.3
+
+# Logging and Configuration
+loguru==0.7.2
+
+# Development and Testing
+pytest==7.4.3
+black==23.11.0
+flake8==6.1.0
+
+# Optional: Performance and Caching
+lxml==4.9.3
+requests==2.31.0
+aiohttp==3.9.1

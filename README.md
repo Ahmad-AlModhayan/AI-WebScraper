@@ -1,77 +1,96 @@
-# AI Web Scraper
+# AI Web Scraper Pro 🌐
 
-AI Web Scraper is a dynamic and intelligent web scraping tool built using Streamlit, Selenium, and Llama 3.2. This tool allows you to scrape dynamic web pages, analyze the extracted content using AI, and perform a variety of tasks like summarization, table extraction, and more.
+## Overview
+AI Web Scraper Pro is an advanced web scraping and data analysis tool powered by AI technologies. It provides intelligent web content extraction, analysis, and insights generation.
 
-## Features
-- **Dynamic Web Scraping**: Handles dynamic websites using Selenium with scrolling and content loading.
-- **Content Cleaning**: Extracts and cleans relevant HTML content with BeautifulSoup.
-- **AI-Powered Parsing**: Analyze scraped content with Llama 3.2 for various text processing tasks.
-- **Streamlit Interface**: User-friendly interface for scraping and content analysis.
-- **Dynamic Selector Support**: Customize scraping by specifying CSS selectors for specific elements.
+## 🚀 Features
+- 🔍 Advanced Web Scraping
+- 📊 AI-Powered Data Analysis
+- 🤖 Llama 3.2 Model Integration
+- 📈 Flexible Configuration
+- 🔒 Secure and Robust
 
-## Requirements
-- Docker (optional for containerized deployment)
-- Python 3.10 or later
+## 🛠 Technologies
+- Python 3.10+
+- Streamlit
+- Selenium
+- LangChain
+- Ollama
+- ChromaDB
+- Sentence Transformers
 
-## Installation
-### Step 1: Clone the Repository
+## 📦 Prerequisites
+- Docker
+- Docker Compose
+- Ollama (optional, but recommended)
+
+## 🚀 Quick Start
+
+### Local Development
+1. Clone the repository
 ```bash
-git clone https://github.com/<your_username>/ai-web-scraper.git
-cd ai-web-scraper
+git clone https://github.com/yourusername/ai-web-scraper-pro.git
+cd ai-web-scraper-pro
 ```
 
-### Step 2: Install Dependencies
-Using pip:
+2. Create virtual environment
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### Step 3: Run the Application
+4. Run the application
 ```bash
-streamlit run app.py
+streamlit run src/app.py
 ```
 
-The app will be available at `http://localhost:8501`.
-
-## Containerized Deployment
-### Build the Docker Image
+### Docker Deployment
+1. Build and run with Docker Compose
 ```bash
-docker build -t ai-web-scraper .
+docker-compose up --build
 ```
 
-### Run the Container
-```bash
-docker run -p 8501:8501 ai-web-scraper
+2. Access the application
+- URL: `http://localhost:8501`
+
+## 🔧 Configuration
+Customize your deployment using configuration files:
+- `config/development.yml`
+- `config/production.yml`
+
+## 🔬 Environment Variables
+- `ENV`: Set environment (`development`/`production`)
+- `OLLAMA_MODEL`: Specify AI model
+
+## 📋 Project Structure
+```
+ai-web-scraper-pro/
+│
+├── src/
+│   ├── core/          # Scraping and analysis logic
+│   ├── ui/            # User interface components
+│   └── utils/         # Configuration and logging
+│
+├── config/            # Environment configurations
+├── data/              # Data storage
+├── docs/              # Documentation
+└── tests/             # Testing infrastructure
 ```
 
-Access the app in your browser at `http://localhost:8501`.
+## 🤝 Contributing
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
-## Usage
-1. **Enter the URL**: Provide the URL of the website to scrape.
-2. **Customize Selectors**: Optionally, specify CSS selectors for dynamic content.
-3. **Scrape and Analyze**:
-   - Scrape the website's content.
-   - Use AI-powered parsing to extract or process specific content.
+## 📄 License
+MIT License
 
-## Example Prompts for Parsing
-- **Extract a Table**: Extract all tables from the HTML content and return them in markdown format.
-- **Extract a List**: Extract all bullet-point lists from the HTML content and return them as plain text.
-- **Summarize**: Summarize the main text content in 100 words.
-- **Find Links**: Extract all hyperlinks (anchor tags) from the HTML and return them as a list.
-
-## Technologies Used
-- **Streamlit**: Interactive UI for web scraping and analysis.
-- **Selenium**: Dynamic content scraping.
-- **BeautifulSoup**: Content extraction and cleaning.
-- **Llama 3.2**: AI-powered content analysis.
-- **Docker**: Containerized deployment.
-
-## Future Improvements
-- Add support for CAPTCHA bypassing.
-- Enhance error handling and dynamic content scraping for highly complex websites.
-
-## Contributing
-Contributions are welcome! Feel free to submit a pull request or open an issue for suggestions or bug reports.
-
-## License
-This project is licensed under the MIT License.
+## 🌟 Support
+Star the project, open issues, or submit pull requests!

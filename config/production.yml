@@ -1,0 +1,36 @@
+app:
+  name: AI Web Scraper
+  version: 2.1.0
+  environment: production
+
+logging:
+  console_level: ERROR
+  file_level: INFO
+  file_name: app.log
+  max_file_size: 52428800  # 50MB
+  backup_count: 10
+
+scraper:
+  default_timeout: 45
+  headless_mode: true
+  user_agent_rotation: true
+  proxy_support: true
+
+analyzer:
+  model: llama3.2
+  embedding_model: sentence-transformers/all-mpnet-base-v2
+  chunk_size: 2000
+  chunk_overlap: 400
+
+ui:
+  theme: light
+  accent_color: '#2ecc71'
+  max_results_display: 250
+
+export:
+  default_format: json
+  allowed_formats:
+    - csv
+    - json
+    - excel
+    - parquet

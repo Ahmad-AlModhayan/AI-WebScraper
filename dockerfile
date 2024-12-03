@@ -1,27 +1,48 @@
-# Use a base Python image
-FROM python:3.8-slim
+# Use an official Python runtime as a parent image
+FROM python:3.10-slim-bullseye
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y wget gnupg unzip
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV ENV=production
 
-# Install Google Chrome
-RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list' \
-    && apt-get update && apt-get install -y google-chrome-stable
-
-# Install ChromeDriver
-RUN CHROMEDRIVER_VERSION=`curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE` && \
-    wget -O /tmp/chromedriver.zip "https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip" && \
-    unzip /tmp/chromedriver.zip -d /usr/local/bin/ && rm /tmp/chromedriver.zip
-
-# Set working directory in the container
+# Set working directory
 WORKDIR /app
 
-# Copy the project files into the container
-COPY . .
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    unzip \
+    wget \
+    gnupg \
+    chromium \
+    chromium-driver \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
+# Install Ollama
+RUN curl -fsSL https://ollama.com/install.sh | sh
+
+# Copy requirements and install Python packages
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Run the Streamlit app
-ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.headless=true"]
+# Copy the entire project
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p logs data/cache data/exports
+
+# Expose Streamlit port
+EXPOSE 8501
+
+# Create entrypoint script
+RUN echo '#!/bin/bash\n\
+ollama serve & \
+sleep 5 && \
+ollama pull llama3.2 && \
+python -m streamlit run src/app.py --server.port=8501 --server.address=0.0.0.0\
+' > /entrypoint.sh && chmod +x /entrypoint.sh
+
+# Set the entrypoint
+ENTRYPOINT ["/entrypoint.sh"]

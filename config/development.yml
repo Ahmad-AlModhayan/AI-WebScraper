@@ -1,0 +1,35 @@
+app:
+  name: AI Web Scraper
+  version: 2.1.0
+  environment: development
+
+logging:
+  console_level: DEBUG
+  file_level: INFO
+  file_name: app.log
+  max_file_size: 10485760  # 10MB
+  backup_count: 5
+
+scraper:
+  default_timeout: 30
+  headless_mode: true
+  user_agent_rotation: true
+  proxy_support: false
+
+analyzer:
+  model: llama3.2
+  embedding_model: sentence-transformers/all-mpnet-base-v2
+  chunk_size: 1000
+  chunk_overlap: 200
+
+ui:
+  theme: dark
+  accent_color: '#3498db'
+  max_results_display: 100
+
+export:
+  default_format: csv
+  allowed_formats:
+    - csv
+    - json
+    - excel
