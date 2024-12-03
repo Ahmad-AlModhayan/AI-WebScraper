@@ -287,3 +287,16 @@ class AIAnalyzer:
             raise ValueError(f"Unsupported export format: {format}")
         
         return filepath
+
+def DataAnalyzer(*args, **kwargs):
+    """
+    Backward compatibility function for DataAnalyzer
+    Redirects to AIAnalyzer with a deprecation warning
+    """
+    import warnings
+    warnings.warn(
+        "DataAnalyzer is deprecated. Use AIAnalyzer instead.", 
+        DeprecationWarning, 
+        stacklevel=2
+    )
+    return AIAnalyzer(*args, **kwargs)

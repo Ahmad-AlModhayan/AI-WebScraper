@@ -1,89 +1,181 @@
 import streamlit as st
+from typing import Literal, Dict
+import logging
 
-def apply_custom_theme():
-    """Apply a modern, clean UI theme"""
-    st.set_page_config(
-        page_title="AI Web Scraper Pro",
-        page_icon="🌐",
-        layout="wide"
-    )
+logger = logging.getLogger(__name__)
+
+def set_language_styles(language: Literal['ar', 'en'] = 'ar'):
+    """
+    Apply language-specific styling and direction
     
-    # Custom CSS for enhanced UI
-    st.markdown("""
+    Args:
+        language (str): Language to apply ('ar' or 'en')
+    """
+    # Font selection based on language
+    fonts = {
+        'ar': "'Cairo', sans-serif",
+        'en': "'Inter', sans-serif"
+    }
+    
+    # Text direction and alignment
+    direction = 'rtl' if language == 'ar' else 'ltr'
+    text_align = 'right' if language == 'ar' else 'left'
+    
+    # Language-specific CSS
+    st.markdown(f"""
     <style>
-    /* Global Styles */
-    body {
-        color: #333;
-        background-color: #f4f6f9;
-        font-family: 'Inter', sans-serif;
-    }
+    body {{
+        font-family: {fonts[language]};
+        direction: {direction};
+        text-align: {text_align};
+    }}
     
-    /* Streamlit Specific Overrides */
-    .stApp {
-        max-width: 1200px;
-        margin: 0 auto;
-    }
+    /* Ensure proper text alignment for different components */
+    .stMarkdown, .stTextInput, .stButton, .stRadio {{
+        text-align: {text_align};
+    }}
     
-    /* Buttons */
-    .stButton>button {
-        background-color: #3498db;
-        color: white;
-        border-radius: 5px;
-        transition: all 0.3s ease;
-    }
+    /* Adjust sidebar and radio button layout */
+    .css-1aumxhk {{
+        text-align: {text_align};
+    }}
     
-    .stButton>button:hover {
-        background-color: #2980b9;
-        transform: scale(1.05);
-    }
-    
-    /* Sidebar */
-    .css-1aumxhk {
-        background-color: #ffffff;
-        border-right: 1px solid #e0e0e0;
-    }
-    
-    /* Headers */
-    h1, h2, h3 {
-        color: #2c3e50;
-        font-weight: 600;
-    }
-    
-    /* Data Display */
-    .stDataFrame {
-        border: 1px solid #e0e0e0;
-        border-radius: 5px;
-    }
+    .stRadio > div {{
+        flex-direction: {'column' if language == 'ar' else 'column'};
+        align-items: {'flex-end' if language == 'ar' else 'flex-start'};
+    }}
     </style>
     """, unsafe_allow_html=True)
 
-def sidebar_menu():
-    """Create a dynamic sidebar menu"""
-    st.sidebar.title("🌐 AI Web Scraper")
+def get_current_language() -> str:
+    """
+    Get the current application language
     
-    menu_options = {
-        "🏠 Home": "home",
-        "🔍 Web Scraper": "scraper",
-        "📊 Data Analysis": "analysis",
-        "⚙️ Settings": "settings"
+    Returns:
+        str: Current language code ('ar' or 'en')
+    """
+    # Default to Arabic if not set
+    return st.session_state.get('language', 'ar')
+
+def set_language(language: str):
+    """
+    Set the application language in session state
+    
+    Args:
+        language (str): Language code ('ar' or 'en')
+    """
+    # Validate language input
+    if language not in ['ar', 'en']:
+        logger.warning(f"Invalid language: {language}. Defaulting to Arabic.")
+        language = 'ar'
+    
+    # Set language in session state
+    st.session_state['language'] = language
+    
+    # Optional: Trigger a rerun to apply language changes
+    st.experimental_rerun()
+
+def sidebar_menu():
+    """
+    Create a multilingual sidebar menu with language-specific icons and titles
+    
+    Returns:
+        str: Selected menu item
+    """
+    # Get current language
+    current_lang = get_current_language()
+    
+    # Multilingual menu configuration
+    menu_config = {
+        'ar': {
+            'home': '🏠 الرئيسية',
+            'scraper': '🔍 تحليل المواقع',
+            'analysis': '📊 تحليل البيانات',
+            'settings': '⚙️ الإعدادات'
+        },
+        'en': {
+            'home': '🏠 Home',
+            'scraper': '🔍 Web Scraper',
+            'analysis': '📊 Data Analysis',
+            'settings': '⚙️ Settings'
+        }
     }
     
-    selected_option = st.sidebar.radio("Navigation", list(menu_options.keys()))
+    # Select menu items based on current language
+    menu_items = menu_config[current_lang]
     
-    return menu_options[selected_option]
+    # Create sidebar menu
+    with st.sidebar:
+        # Sidebar title
+        st.title(
+            "أدوات تحليل الويب" if current_lang == 'ar' else "Web Analysis Tools"
+        )
+        
+        # Menu selection
+        selected_page = st.radio(
+            "اختر صفحة" if current_lang == 'ar' else "Select Page", 
+            list(menu_items.values())
+        )
+    
+    # Return the selected page
+    return selected_page
 
-def loading_spinner():
-    """Custom loading spinner with context"""
-    return st.spinner("🔍 Analyzing content... This might take a moment.")
+def loading_spinner(language: Literal['ar', 'en'] = 'ar') -> st.spinner:
+    """
+    Create a context manager for loading spinner with language support
+    
+    Args:
+        language (str): Current language
+    
+    Returns:
+        st.spinner context manager
+    """
+    messages = {
+        'ar': ' جارٍ التحليل... قد يستغرق هذا بعض الوقت',
+        'en': ' Analyzing content... This might take a moment'
+    }
+    return st.spinner(messages[language])
 
-def success_message(message):
-    """Enhanced success notification"""
-    st.success(f"✅ {message}")
+def success_message(message: str, language: Literal['ar', 'en'] = 'ar') -> None:
+    """
+    Display a success message
+    
+    Args:
+        message (str): Message to display
+        language (str): Current language
+    """
+    st.success(f" {message}")
 
-def error_message(message):
-    """Enhanced error notification"""
-    st.error(f"❌ {message}")
+def error_message(message: str, language: Literal['ar', 'en'] = 'ar') -> None:
+    """
+    Display an error message
+    
+    Args:
+        message (str): Message to display
+        language (str): Current language
+    """
+    st.error(f" {message}")
 
-def info_message(message):
-    """Enhanced info notification"""
-    st.info(f"ℹ️ {message}")
+def info_message(message: str, language: Literal['ar', 'en'] = 'ar') -> None:
+    """
+    Display an informational message
+    
+    Args:
+        message (str): Message to display
+        language (str): Current language
+    """
+    st.info(f" {message}")
+
+# Backward compatibility function
+def apply_custom_theme():
+    """
+    Backward compatibility function for theme application
+    """
+    import warnings
+    warnings.warn(
+        "apply_custom_theme() is deprecated. Use set_language_styles() instead.", 
+        DeprecationWarning, 
+        stacklevel=2
+    )
+    current_language = get_current_language()
+    set_language_styles(current_language)

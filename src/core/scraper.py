@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import random
 import requests
@@ -65,10 +66,134 @@ class WebScraper:
         return {'http': random.choice(self.proxies), 
                 'https': random.choice(self.proxies)}
 
+    def _extract_tool_details(self, soup: BeautifulSoup) -> List[Dict[str, str]]:
+        """
+        Extract detailed tool information from the page with advanced strategies
+        
+        Args:
+            soup (BeautifulSoup): Parsed HTML content
+        
+        Returns:
+            List[Dict[str, str]]: List of tool details
+        """
+        tools = []
+        
+        # Advanced selectors for tool extraction
+        tool_selectors = [
+            # Specific class-based selectors
+            '.ai-tool-card', '.tool-listing', '.ai-tool-item', 
+            '.tool-grid-item', '.ai-product-card',
+            
+            # More generic selectors
+            'div[class*="tool"]', 'article[class*="tool"]',
+            'div[class*="product"]', 'article[class*="product"]',
+            
+            # Fallback generic selectors
+            'div.card', 'div.item', 'section.tool',
+            'div.product', 'article.product'
+        ]
+        
+        # Specific text patterns for tool identification
+        tool_keywords = [
+            'ai tool', 'web tool', 'productivity tool', 
+            'marketing tool', 'ai product', 'web service'
+        ]
+        
+        # Try different selectors
+        for selector in tool_selectors:
+            tool_elements = soup.select(selector)
+            
+            if tool_elements:
+                for tool in tool_elements:
+                    # Advanced name extraction
+                    name_selectors = [
+                        '.tool-name', '.product-name', 
+                        '.ai-tool-title', 'h2', 'h3', 
+                        '.card-title', '.item-title'
+                    ]
+                    name_el = None
+                    for name_selector in name_selectors:
+                        name_el = tool.select_one(name_selector)
+                        if name_el:
+                            break
+                    
+                    # Name extraction with fallback
+                    name = name_el.get_text(strip=True) if name_el else None
+                    
+                    # Advanced description extraction
+                    desc_selectors = [
+                        '.tool-description', '.product-description', 
+                        '.ai-tool-desc', 'p', '.card-text', 
+                        '.item-description'
+                    ]
+                    desc_el = None
+                    for desc_selector in desc_selectors:
+                        desc_el = tool.select_one(desc_selector)
+                        if desc_el:
+                            break
+                    
+                    # Description extraction with fallback
+                    description = desc_el.get_text(strip=True) if desc_el else None
+                    
+                    # Category extraction
+                    category_selectors = [
+                        '.tool-category', '.product-category', 
+                        '.category-tag', '.ai-tool-category'
+                    ]
+                    category_el = None
+                    for cat_selector in category_selectors:
+                        category_el = tool.select_one(cat_selector)
+                        if category_el:
+                            break
+                    
+                    # Category extraction with fallback
+                    category = category_el.get_text(strip=True) if category_el else None
+                    
+                    # Rating extraction
+                    rating_selectors = [
+                        '.tool-rating', '.product-rating', 
+                        '.rating', '.stars', '.score'
+                    ]
+                    rating_el = None
+                    for rating_selector in rating_selectors:
+                        rating_el = tool.select_one(rating_selector)
+                        if rating_el:
+                            break
+                    
+                    # Rating extraction with fallback
+                    rating = rating_el.get_text(strip=True) if rating_el else None
+                    
+                    # Validate and enhance tool details
+                    if name and description:
+                        # Attempt to categorize if not found
+                        if not category:
+                            # Use keywords to infer category
+                            for keyword in tool_keywords:
+                                if keyword in name.lower() or keyword in description.lower():
+                                    category = keyword.replace('tool', '').replace('ai', '').strip().title()
+                                    break
+                        
+                        # Normalize rating
+                        if rating:
+                            # Remove non-numeric characters
+                            rating = re.sub(r'[^\d.]', '', rating)
+                        
+                        tools.append({
+                            'name': name,
+                            'description': description,
+                            'category': category or 'Uncategorized',
+                            'rating': rating or 'N/A'
+                        })
+                
+                if tools:
+                    break  # Stop if we found tools
+        
+        return tools
+
     def scrape(self, 
                url: str, 
                max_pages: int = 10, 
-               use_proxy: bool = False) -> List[Dict[str, Union[str, List[str]]]]:
+               use_proxy: bool = False) -> List[Dict[str, Union[str, List[Dict[str, str]]]]]:
         """
         Scrape web content with multilingual and configurable support
         
@@ -78,7 +203,7 @@ class WebScraper:
             use_proxy (bool): Whether to use proxy servers
         
         Returns:
-            List[Dict[str, Union[str, List[str]]]]: Scraped content
+            List[Dict[str, Union[str, List[Dict[str, str]]]]]: Scraped content
         """
         # Logging in multilingual context
         logger.info(f"Starting scraping for {url} | اِبدأ استخراج المحتوى من {url}")
@@ -106,36 +231,38 @@ class WebScraper:
                 # Parse content
                 soup = BeautifulSoup(response.text, 'html.parser')
                 
-                # Extract content based on language
-                if self.language == 'ar':
-                    content_selectors = [
-                        'article', '.article-content', '.entry-content', 
-                        'div.content', 'main', 'body'
-                    ]
-                else:
-                    content_selectors = [
-                        'article', '.content', '.entry-content', 
-                        'div.main-content', 'main', 'body'
-                    ]
+                # Extract tools
+                tools = self._extract_tool_details(soup)
                 
-                # Find content
-                content_element = None
-                for selector in content_selectors:
-                    content_element = soup.select_one(selector)
-                    if content_element:
-                        break
-                
-                # Extract text
-                if content_element:
-                    paragraphs = content_element.find_all(['p', 'h1', 'h2', 'h3'])
-                    page_content = [p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True)]
+                # If no tools found, try more aggressive extraction
+                if not tools:
+                    # Attempt to find text blocks that might represent tools
+                    text_blocks = soup.find_all(['div', 'article', 'section'], 
+                                                text=re.compile(r'\b(AI|tool|app|service)\b', re.IGNORECASE))
                     
-                    results.append({
-                        'url': url,
-                        'page': current_page,
-                        'language': self.language,
-                        'content': page_content
-                    })
+                    for block in text_blocks:
+                        name = block.find(['h2', 'h3', 'strong'])
+                        desc = block.find('p')
+                        
+                        if name and desc:
+                            tools.append({
+                                'name': name.get_text(strip=True),
+                                'description': desc.get_text(strip=True),
+                                'category': 'Discovered',
+                                'rating': 'N/A'
+                            })
+                
+                # Log if still no tools found
+                if not tools:
+                    logger.warning(f"No tools found on page {current_page} | لم يتم العثور على أدوات في الصفحة {current_page}")
+                    break
+                
+                results.append({
+                    'url': url,
+                    'page': current_page,
+                    'language': self.language,
+                    'tools': tools
+                })
                 
                 # Find next page link
                 next_page_link = soup.find('a', text=['Next', 'التالي', 'Next Page', 'الصفحة التالية'])
@@ -155,7 +282,7 @@ class WebScraper:
         return results
 
     def export_results(self, 
-                       results: List[Dict[str, Union[str, List[str]]]], 
+                       results: List[Dict[str, Union[str, List[Dict[str, str]]]]], 
                        format: str = 'json') -> str:
         """
         Export scraping results in various formats
@@ -171,8 +298,18 @@ class WebScraper:
         export_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'exports')
         os.makedirs(export_dir, exist_ok=True)
         
+        # Flatten tools for DataFrame
+        flat_results = []
+        for result in results:
+            for tool in result.get('tools', []):
+                flat_tool = tool.copy()
+                flat_tool['url'] = result['url']
+                flat_tool['page'] = result['page']
+                flat_tool['language'] = result['language']
+                flat_results.append(flat_tool)
+        
         # Convert to DataFrame
-        df = pd.DataFrame(results)
+        df = pd.DataFrame(flat_results)
         
         # Generate filename
         timestamp = time.strftime("%Y%m%d-%H%M%S")
