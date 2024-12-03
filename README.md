@@ -29,8 +29,8 @@ AI Web Scraper Pro is an advanced web scraping and data analysis tool powered by
 ### Local Development
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/ai-web-scraper-pro.git
-cd ai-web-scraper-pro
+git clone https://github.com/yourusername/ai-web-scraper.git
+cd ai-web-scraper
 ```
 
 2. Create virtual environment
@@ -69,7 +69,7 @@ Customize your deployment using configuration files:
 
 ## 📋 Project Structure
 ```
-ai-web-scraper-pro/
+ai-web-scraper/
 │
 ├── src/
 │   ├── core/          # Scraping and analysis logic
