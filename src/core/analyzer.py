@@ -1,331 +1,289 @@
 import os
-from typing import List, Dict, Optional, Union, Any
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import Chroma
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
-from langchain_community.llms import Ollama
-from langchain_community.document_loaders import DataFrameLoader
-from langchain.docstore.document import Document
-import streamlit as st
-from datetime import datetime
+import json
 import pandas as pd
 import numpy as np
+from typing import Dict, List, Optional, Union, Any
+
+import torch
 from sentence_transformers import SentenceTransformer
-import logging
+from transformers import AutoModelForQuestionAnswering, AutoTokenizer
 import ollama
 
-class ContentParser:
-    def __init__(self, model_name: str = "llama3.2"):
-        """Initialize the ContentParser with specified model and embeddings."""
-        self.model_name = model_name
-        self.llm = Ollama(model=model_name)
-        self.embeddings = HuggingFaceEmbeddings()
-        self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200,
-            length_function=len,
-        )
-        
-    def _create_vectorstore(self, texts: List[str]) -> Chroma:
-        """Create a vector store from the provided texts."""
-        docs = self.text_splitter.create_documents(texts)
-        return Chroma.from_documents(docs, self.embeddings)
-    
-    def _create_chain(self, template: str) -> LLMChain:
-        """Create a LangChain chain with the specified template."""
-        prompt = PromptTemplate(
-            input_variables=["context", "question"],
-            template=template
-        )
-        return LLMChain(llm=self.llm, prompt=prompt)
+from src.utils.config import config
+from src.utils.logging import logger
 
-    def analyze_content(self, data: Union[str, List[str]], task: str = "analyze", 
-                       options: Optional[str] = None) -> str:
+class AIAnalyzer:
+    def __init__(self, 
+                 language: Optional[str] = None, 
+                 model: Optional[str] = None):
         """
-        Analyze content using LangChain and vector store for better context handling.
+        Initialize AI Analyzer with multilingual support
+        
+        Args:
+            language (Optional[str]): Language context for analysis
+            model (Optional[str]): Specific AI model to use
         """
-        # Convert input to list if string
-        texts = [data] if isinstance(data, str) else data
+        # Language configuration
+        self.language = language or config.get('app.languages.default', 'ar')
         
-        # Create vector store
-        vectorstore = self._create_vectorstore(texts)
+        # Model configuration
+        self.model_name = model or config.get('analyzer.model', 'llama3.2')
+        self.embedding_model_name = config.get('analyzer.embedding_model', 'sentence-transformers/all-mpnet-base-v2')
         
-        # Generate task-specific template
-        template = self._get_task_template(task)
+        # Chunk configuration
+        self.chunk_size = config.get('analyzer.chunk_size', 2000)
+        self.chunk_overlap = config.get('analyzer.chunk_overlap', 400)
         
-        # Create chain
-        chain = self._create_chain(template)
-        
-        # Get relevant context
-        context = self._get_relevant_context(vectorstore, task, options)
-        
-        try:
-            # Run chain
-            response = chain.run(context=context, question=options if options else task)
-            return response
-        except Exception as e:
-            st.error(f"Error during analysis: {str(e)}")
-            return "Error occurred during analysis."
+        # Load models
+        self._load_models()
 
-    def _get_task_template(self, task: str) -> str:
-        """Get task-specific prompt template."""
-        templates = {
-            "analyze": """
-            You are analyzing web content. Use the following context to provide insights:
-            
-            Context: {context}
-            
-            Question: {question}
-            
-            Provide a detailed analysis focusing on key patterns and insights.
-            """,
-            
-            "summarize": """
-            Summarize the following content concisely:
-            
-            Context: {context}
-            
-            Question: {question}
-            
-            Provide a clear and concise summary.
-            """,
-            
-            "identify selectors": """
-            Analyze the following HTML to identify CSS selectors:
-            
-            Context: {context}
-            
-            Requirements: {question}
-            
-            Identify and explain the most relevant CSS selectors.
-            """,
-            
-            "extract": """
-            Extract specific information from the following content:
-            
-            Context: {context}
-            
-            Requirements: {question}
-            
-            Provide the extracted information in a structured format.
-            """
-        }
-        
-        return templates.get(task, templates["analyze"])
-
-    def _get_relevant_context(self, vectorstore: Chroma, task: str, 
-                            options: Optional[str] = None) -> str:
-        """Get relevant context from vector store based on task and options."""
-        query = options if options else task
-        docs = vectorstore.similarity_search(query, k=3)
-        return "\n\n".join(doc.page_content for doc in docs)
-
-    def extract_structured_data(self, content: Dict[str, Any]) -> Dict[str, Any]:
+    def _load_models(self):
         """
-        Extract structured data from content using LangChain.
-        """
-        template = """
-        Extract structured information from the following content:
-        
-        Content: {context}
-        
-        Extract the following information:
-        - Main topic or title
-        - Key points or facts
-        - Dates and numbers
-        - Named entities (people, organizations, locations)
-        - Any relevant metadata
-        
-        Format the output as a structured summary.
-        """
-        
-        chain = self._create_chain(template)
-        
-        try:
-            # Convert content dict to string
-            content_str = "\n".join(f"{k}: {v}" for k, v in content.items())
-            
-            # Get structured analysis
-            result = chain.run(context=content_str, question="")
-            
-            # Parse the result into a structured format
-            # This is a simple implementation - you might want to add more sophisticated parsing
-            structured_data = {
-                "content": content,
-                "analysis": result,
-                "metadata": {
-                    "model": self.model_name,
-                    "timestamp": datetime.now().isoformat()
-                }
-            }
-            
-            return structured_data
-            
-        except Exception as e:
-            st.error(f"Error extracting structured data: {str(e)}")
-            return {"error": str(e)}
-
-class DataAnalyzer:
-    def __init__(
-        self, 
-        model: str = 'llama3.2', 
-        embedding_model: str = 'sentence-transformers/all-mpnet-base-v2'
-    ):
-        """
-        Initialize DataAnalyzer with AI model and embedding configuration
-        
-        :param model: AI model for analysis
-        :param embedding_model: Embedding model for vector representation
-        """
-        self.logger = logging.getLogger(__name__)
-        self.model = model
-        self.embedding_model = HuggingFaceEmbeddings(model_name=embedding_model)
-        
-        # Configure text splitting
-        self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200,
-            length_function=len
-        )
-    
-    def _prepare_documents(self, data: Union[pd.DataFrame, str]) -> list:
-        """
-        Prepare documents for vector store
-        
-        :param data: Input data to be processed
-        :return: List of prepared documents
-        """
-        if isinstance(data, pd.DataFrame):
-            # Combine all text columns
-            text = ' '.join(data.apply(lambda row: ' '.join(row.astype(str)), axis=1))
-        elif isinstance(data, str):
-            text = data
-        else:
-            raise ValueError("Unsupported data type. Use DataFrame or string.")
-        
-        # Split text into chunks
-        return self.text_splitter.split_text(text)
-    
-    def analyze_dataset(
-        self, 
-        data: Union[pd.DataFrame, str], 
-        analysis_type: str = 'summary', 
-        custom_prompt: Optional[str] = None
-    ) -> Dict[str, Any]:
-        """
-        Analyze dataset using AI
-        
-        :param data: Dataset to analyze
-        :param analysis_type: Type of analysis (summary, technical, custom)
-        :param custom_prompt: Optional custom analysis prompt
-        :return: Analysis results
+        Load AI models with multilingual support
         """
         try:
-            # Prepare documents
-            documents = self._prepare_documents(data)
+            # Embedding model
+            self.embedding_model = SentenceTransformer(self.embedding_model_name)
             
-            # Create vector store
-            vectorstore = Chroma.from_texts(
-                documents, 
-                embedding=self.embedding_model
-            )
-            
-            # Select prompt based on analysis type
-            prompts = {
-                'summary': "Provide a concise summary of the key insights from this text.",
-                'technical': "Perform a detailed technical analysis of the content, highlighting key technical aspects.",
-                'custom': custom_prompt or "Analyze the text comprehensively."
-            }
-            
-            prompt = prompts.get(analysis_type.lower(), prompts['summary'])
-            
-            # Generate AI analysis
-            response = ollama.chat(
-                model=self.model,
-                messages=[
-                    {
-                        'role': 'system', 
-                        'content': 'You are an expert data analyst and AI assistant.'
-                    },
-                    {
-                        'role': 'user', 
-                        'content': f"{prompt}\n\nContext:\n{' '.join(documents[:5])}"
-                    }
-                ]
-            )
-            
-            return {
-                'analysis_type': analysis_type,
-                'summary': response['message']['content'],
-                'document_count': len(documents),
-                'vector_store_size': len(vectorstore._collection.get())
-            }
+            # Ensure Ollama model is available
+            try:
+                ollama.pull(self.model_name)
+            except Exception as e:
+                logger.warning(f"Could not pull Ollama model: {e}")
         
         except Exception as e:
-            self.logger.error(f"Analysis error: {e}")
+            logger.error(f"Model loading error: {e} | خطأ في تحميل النماذج: {e}")
             raise
 
-    def export_data(self, data: Union[pd.DataFrame, List[Dict]], 
-                   format_type: str,
-                   filename: str) -> str:
-        """Export data in various formats."""
+    def _chunk_text(self, text: str) -> List[str]:
+        """
+        Split text into manageable chunks
+        
+        Args:
+            text (str): Input text to chunk
+        
+        Returns:
+            List[str]: List of text chunks
+        """
+        # Multilingual chunk splitting
+        words = text.split()
+        chunks = []
+        current_chunk = []
+        current_length = 0
+
+        for word in words:
+            current_chunk.append(word)
+            current_length += len(word)
+
+            if current_length >= self.chunk_size:
+                chunks.append(' '.join(current_chunk))
+                current_chunk = current_chunk[-int(self.chunk_overlap/2):]
+                current_length = len(' '.join(current_chunk))
+
+        if current_chunk:
+            chunks.append(' '.join(current_chunk))
+
+        return chunks
+
+    def _get_prompt(self, prompt_type: str) -> str:
+        """
+        Get localized prompt based on language and type
+        
+        Args:
+            prompt_type (str): Type of prompt (summary, technical, custom)
+        
+        Returns:
+            str: Localized prompt template
+        """
+        return config.get(f'analyzer.prompts.{self.language}.{prompt_type}', 
+                          config.get(f'analyzer.prompts.en.{prompt_type}'))
+
+    def summarize(self, file_or_text: Union[str, pd.DataFrame, pd.Series]) -> Dict[str, Any]:
+        """
+        Generate a summary of the input content
+        
+        Args:
+            file_or_text (Union[str, pd.DataFrame, pd.Series]): Content to summarize
+        
+        Returns:
+            Dict[str, Any]: Summary results
+        """
         try:
-            df = pd.DataFrame(data) if isinstance(data, list) else data
-            
-            if format_type == "csv":
-                df.to_csv(filename, index=False)
-            elif format_type == "excel":
-                df.to_excel(filename, index=False)
-            elif format_type == "json":
-                df.to_json(filename, orient="records", indent=2)
-            elif format_type == "sql":
-                # Generate SQL create and insert statements
-                table_name = os.path.splitext(os.path.basename(filename))[0]
-                sql_statements = []
-                
-                # Create table statement
-                columns = []
-                for col, dtype in df.dtypes.items():
-                    sql_type = "TEXT"  # Default type
-                    if np.issubdtype(dtype, np.number):
-                        sql_type = "NUMERIC"
-                    elif np.issubdtype(dtype, np.datetime64):
-                        sql_type = "DATETIME"
-                    columns.append(f"{col} {sql_type}")
-                
-                create_stmt = f"CREATE TABLE {table_name} (\n  "
-                create_stmt += ",\n  ".join(columns)
-                create_stmt += "\n);"
-                sql_statements.append(create_stmt)
-                
-                # Insert statements
-                for _, row in df.iterrows():
-                    values = []
-                    for val in row:
-                        if pd.isna(val):
-                            values.append("NULL")
-                        elif isinstance(val, (int, float)):
-                            values.append(str(val))
-                        else:
-                            values.append(f"'{str(val)}'")
-                    
-                    insert_stmt = f"INSERT INTO {table_name} VALUES ({', '.join(values)});"
-                    sql_statements.append(insert_stmt)
-                
-                with open(filename, 'w') as f:
-                    f.write("\n".join(sql_statements))
+            # Prepare text
+            if isinstance(file_or_text, (pd.DataFrame, pd.Series)):
+                text = ' '.join(file_or_text.astype(str))
+            elif isinstance(file_or_text, str):
+                text = file_or_text
             else:
-                raise ValueError(f"Unsupported export format: {format_type}")
-            
-            return filename
+                raise ValueError("Unsupported input type")
+
+            # Chunk text
+            chunks = self._chunk_text(text)
+
+            # Prepare prompt
+            prompt = self._get_prompt('summary')
+
+            # Analyze using Ollama
+            summaries = []
+            for chunk in chunks:
+                response = ollama.chat(model=self.model_name, messages=[
+                    {'role': 'system', 'content': prompt},
+                    {'role': 'user', 'content': chunk}
+                ])
+                summaries.append(response['message']['content'])
+
+            # Combine summaries
+            final_summary = ' '.join(summaries)
+
+            return {
+                'language': self.language,
+                'summary_length': len(final_summary),
+                'summary': final_summary
+            }
+
         except Exception as e:
-            logging.error(f"Error exporting data: {e}")
+            logger.error(f"Summarization error: {e} | خطأ في التلخيص: {e}")
             raise
 
-# For backward compatibility
-def ai_parse_content(data, task="analyze", options=None):
-    """Legacy function for backward compatibility."""
-    parser = ContentParser()
-    return parser.analyze_content(data, task, options)
+    def technical_analysis(self, file_or_text: Union[str, pd.DataFrame, pd.Series]) -> Dict[str, Any]:
+        """
+        Perform technical analysis of the content
+        
+        Args:
+            file_or_text (Union[str, pd.DataFrame, pd.Series]): Content to analyze
+        
+        Returns:
+            Dict[str, Any]: Technical analysis results
+        """
+        try:
+            # Prepare text
+            if isinstance(file_or_text, (pd.DataFrame, pd.Series)):
+                text = ' '.join(file_or_text.astype(str))
+            elif isinstance(file_or_text, str):
+                text = file_or_text
+            else:
+                raise ValueError("Unsupported input type")
+
+            # Chunk text
+            chunks = self._chunk_text(text)
+
+            # Prepare prompt
+            prompt = self._get_prompt('technical')
+
+            # Analyze using Ollama
+            technical_insights = []
+            for chunk in chunks:
+                response = ollama.chat(model=self.model_name, messages=[
+                    {'role': 'system', 'content': prompt},
+                    {'role': 'user', 'content': chunk}
+                ])
+                technical_insights.append(response['message']['content'])
+
+            # Combine insights
+            final_insights = ' '.join(technical_insights)
+
+            # Compute embeddings for key insights
+            embeddings = self.embedding_model.encode(final_insights.split('.'))
+
+            return {
+                'language': self.language,
+                'insights_length': len(final_insights),
+                'technical_insights': final_insights,
+                'embedding_dimensions': embeddings.shape[1]
+            }
+
+        except Exception as e:
+            logger.error(f"Technical analysis error: {e} | خطأ في التحليل التقني: {e}")
+            raise
+
+    def custom_analysis(self, 
+                        file_or_text: Union[str, pd.DataFrame, pd.Series], 
+                        custom_prompt: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Perform custom analysis with user-provided prompt
+        
+        Args:
+            file_or_text (Union[str, pd.DataFrame, pd.Series]): Content to analyze
+            custom_prompt (Optional[str]): User-defined analysis prompt
+        
+        Returns:
+            Dict[str, Any]: Custom analysis results
+        """
+        try:
+            # Prepare text
+            if isinstance(file_or_text, (pd.DataFrame, pd.Series)):
+                text = ' '.join(file_or_text.astype(str))
+            elif isinstance(file_or_text, str):
+                text = file_or_text
+            else:
+                raise ValueError("Unsupported input type")
+
+            # Use default prompt if not provided
+            if not custom_prompt:
+                custom_prompt = self._get_prompt('custom')
+
+            # Chunk text
+            chunks = self._chunk_text(text)
+
+            # Analyze using Ollama
+            custom_insights = []
+            for chunk in chunks:
+                response = ollama.chat(model=self.model_name, messages=[
+                    {'role': 'system', 'content': custom_prompt},
+                    {'role': 'user', 'content': chunk}
+                ])
+                custom_insights.append(response['message']['content'])
+
+            # Combine insights
+            final_insights = ' '.join(custom_insights)
+
+            return {
+                'language': self.language,
+                'prompt': custom_prompt,
+                'insights_length': len(final_insights),
+                'custom_insights': final_insights
+            }
+
+        except Exception as e:
+            logger.error(f"Custom analysis error: {e} | خطأ في التحليل المخصص: {e}")
+            raise
+
+    def export_results(self, 
+                       results: Dict[str, Any], 
+                       format: str = 'json') -> str:
+        """
+        Export analysis results in various formats
+        
+        Args:
+            results (Dict[str, Any]): Analysis results
+            format (str): Export format (json, csv, txt)
+        
+        Returns:
+            str: Path to exported file
+        """
+        # Ensure export directory exists
+        export_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'exports')
+        os.makedirs(export_dir, exist_ok=True)
+        
+        # Generate filename
+        timestamp = pd.Timestamp.now().strftime("%Y%m%d-%H%M%S")
+        base_filename = f'analysis_results_{timestamp}'
+        
+        # Export based on format
+        if format == 'json':
+            filepath = os.path.join(export_dir, f'{base_filename}.json')
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(results, f, ensure_ascii=False, indent=4)
+        elif format == 'csv':
+            filepath = os.path.join(export_dir, f'{base_filename}.csv')
+            df = pd.DataFrame.from_dict(results, orient='index').transpose()
+            df.to_csv(filepath, index=False, encoding='utf-8')
+        elif format == 'txt':
+            filepath = os.path.join(export_dir, f'{base_filename}.txt')
+            with open(filepath, 'w', encoding='utf-8') as f:
+                for key, value in results.items():
+                    f.write(f"{key}: {value}\n")
+        else:
+            raise ValueError(f"Unsupported export format: {format}")
+        
+        return filepath

@@ -1,128 +1,198 @@
 import streamlit as st
-from src.core.scraper import WebScraper
-from src.core.analyzer import DataAnalyzer
-from src.ui.styles import apply_custom_theme, sidebar_menu
+import os
+import sys
+
+# Ensure the src directory is in the Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from src.utils.config import config
-from src.utils.logging import logger
+from src.ui.styles import (
+    apply_custom_theme, 
+    sidebar_menu, 
+    get_current_language, 
+    set_language
+)
+from src.core.scraper import WebScraper
+from src.core.analyzer import AIAnalyzer
 
 def main():
-    """
-    Main Streamlit application entry point
-    Manages application routing and core components
-    """
-    # Apply custom UI theme
+    # Apply custom theme based on current language
     apply_custom_theme()
-    
-    # Select menu option
-    selected_menu = sidebar_menu()
-    
-    # Initialize core components
-    try:
-        scraper = WebScraper(headless=config.get('scraper.headless_mode', True))
-        analyzer = DataAnalyzer(
-            model=config.get('analyzer.model', 'llama3.2'),
-            embedding_model=config.get('analyzer.embedding_model', 'sentence-transformers/all-mpnet-base-v2')
-        )
-    except Exception as e:
-        logger.error(f"Component initialization failed: {e}")
-        st.error("Failed to initialize core components. Please check your configuration.")
-        return
-    
-    # Routing based on selected menu
-    if selected_menu == "home":
+
+    # Get current language
+    current_lang = get_current_language()
+
+    # Sidebar navigation
+    selected_page = sidebar_menu()
+
+    # Multilingual page routing
+    if selected_page == "home" or selected_page == "🏠 الرئيسية":
         render_home_page()
-    elif selected_menu == "scraper":
-        render_scraper_page(scraper, analyzer)
-    elif selected_menu == "analysis":
-        render_analysis_page(analyzer)
-    elif selected_menu == "settings":
+    elif selected_page == "scraper" or selected_page == "🔍 تحليل المواقع":
+        render_scraper_page()
+    elif selected_page == "analysis" or selected_page == "📊 تحليل البيانات":
+        render_analysis_page()
+    elif selected_page == "settings" or selected_page == "⚙️ الإعدادات":
         render_settings_page()
 
 def render_home_page():
-    """Render the landing page"""
-    st.title("Welcome to AI Web Scraper Pro")
-    st.markdown("""
-    ### 🌐 Intelligent Web Content Extraction & Analysis
+    """Render the home page with multilingual support"""
+    current_lang = get_current_language()
     
-    Leverage cutting-edge AI to:
-    - 🔍 Scrape complex web pages
-    - 📊 Analyze extracted content
-    - 🤖 Generate insights using Llama 3.2
-    """)
+    # Multilingual page content
+    page_texts = {
+        'ar': {
+            'title': 'مرحبًا بك في محلل المواقع',
+            'description': 'أداة متقدمة لتحليل محتوى الويب باستخدام الذكاء الاصطناعي',
+            'features': [
+                'استخراج محتوى ذكي',
+                'تحليل متعمق باستخدام AI',
+                'دعم متعدد اللغات'
+            ]
+        },
+        'en': {
+            'title': 'Welcome to AI Web Scraper',
+            'description': 'Advanced web content analysis tool powered by AI',
+            'features': [
+                'Intelligent content extraction',
+                'In-depth AI analysis',
+                'Multilingual support'
+            ]
+        }
+    }
+    
+    texts = page_texts.get(current_lang, page_texts['en'])
+    
+    st.title(texts['title'])
+    st.write(texts['description'])
+    
+    st.subheader(config.get_language_text('ui', 'features', current_lang))
+    for feature in texts['features']:
+        st.markdown(f"- {feature}")
 
-def render_scraper_page(scraper, analyzer):
-    """Web scraping interface"""
-    st.header("🌐 Web Scraper")
+def render_scraper_page():
+    """Render the web scraping page with multilingual support"""
+    current_lang = get_current_language()
     
-    # URL and scraping options
-    url = st.text_input("Enter Website URL", placeholder="https://example.com")
+    # Multilingual page content
+    url_placeholder = config.get_language_text('ui', 'enter_url', current_lang)
+    scrape_button = config.get_language_text('ui', 'start_scraping', current_lang)
     
-    # Advanced scraping options
-    with st.expander("Advanced Scraping Options"):
-        max_pages = st.number_input("Max Pages to Scrape", min_value=1, max_value=50, value=5)
-        use_proxy = st.checkbox("Use Proxy")
+    # URL input
+    url = st.text_input(url_placeholder)
     
-    if st.button("Start Scraping"):
-        try:
-            # Perform scraping
-            results = scraper.scrape(url, max_pages=max_pages, use_proxy=use_proxy)
-            
-            # Display results
-            st.dataframe(results)
-            
-            # Option to analyze
-            if st.button("Analyze Scraped Data"):
-                analysis = analyzer.analyze_dataset(results)
-                st.json(analysis)
-        except Exception as e:
-            st.error(f"Scraping failed: {e}")
-
-def render_analysis_page(analyzer):
-    """Data analysis interface"""
-    st.header("📊 AI-Powered Data Analysis")
+    # Scraping options
+    max_pages = st.number_input(
+        config.get_language_text('ui', 'max_pages', current_lang), 
+        min_value=1, 
+        max_value=50, 
+        value=10
+    )
     
-    # Upload data
-    uploaded_file = st.file_uploader("Upload CSV/Excel", type=['csv', 'xlsx'])
+    use_proxy = st.checkbox(config.get_language_text('ui', 'use_proxy', current_lang))
     
-    if uploaded_file:
-        # Read file
-        import pandas as pd
-        df = pd.read_csv(uploaded_file) if uploaded_file.name.endswith('.csv') else pd.read_excel(uploaded_file)
-        
-        # Analysis type selection
-        analysis_type = st.selectbox(
-            "Select Analysis Type", 
-            ["Technical", "Summary", "Custom"]
-        )
-        
-        if analysis_type == "Custom":
-            custom_prompt = st.text_area("Enter Custom Analysis Prompt")
-        else:
-            custom_prompt = None
-        
-        if st.button("Analyze"):
+    if st.button(scrape_button):
+        if url:
             try:
-                results = analyzer.analyze_dataset(
-                    df, 
-                    analysis_type=analysis_type, 
-                    custom_prompt=custom_prompt
+                scraper = WebScraper()
+                results = scraper.scrape(
+                    url, 
+                    max_pages=max_pages, 
+                    use_proxy=use_proxy
                 )
+                st.success(config.get_language_text('ui', 'success', current_lang))
                 st.json(results)
             except Exception as e:
-                st.error(f"Analysis failed: {e}")
+                st.error(f"{config.get_language_text('ui', 'error', current_lang)}: {str(e)}")
+        else:
+            st.warning(config.get_language_text('ui', 'enter_url', current_lang))
+
+def render_analysis_page():
+    """Render the data analysis page with multilingual support"""
+    current_lang = get_current_language()
+    
+    # Multilingual page content
+    st.subheader(config.get_language_text('ui', 'analysis', current_lang))
+    
+    # Analysis type selection
+    analysis_types = {
+        'ar': {
+            'summary': 'ملخص',
+            'technical': 'تحليل تقني',
+            'custom': 'تحليل مخصص'
+        },
+        'en': {
+            'summary': 'Summary',
+            'technical': 'Technical',
+            'custom': 'Custom'
+        }
+    }
+    
+    # File uploader
+    uploaded_file = st.file_uploader(
+        config.get_language_text('ui', 'upload_file', current_lang)
+    )
+    
+    # Analysis type selection
+    analysis_type = st.selectbox(
+        config.get_language_text('ui', 'select_analysis', current_lang),
+        list(analysis_types[current_lang].values())
+    )
+    
+    # Custom prompt for custom analysis
+    if analysis_type == analysis_types[current_lang]['custom']:
+        custom_prompt = st.text_area(
+            config.get_language_text('ui', 'custom_prompt', current_lang)
+        )
+    
+    # Analyze button
+    if st.button(config.get_language_text('ui', 'analyze', current_lang)):
+        if uploaded_file:
+            try:
+                analyzer = AIAnalyzer()
+                
+                # Determine analysis type
+                if analysis_type == analysis_types[current_lang]['summary']:
+                    results = analyzer.summarize(uploaded_file)
+                elif analysis_type == analysis_types[current_lang]['technical']:
+                    results = analyzer.technical_analysis(uploaded_file)
+                else:
+                    results = analyzer.custom_analysis(
+                        uploaded_file, 
+                        custom_prompt if 'custom_prompt' in locals() else None
+                    )
+                
+                st.success(config.get_language_text('ui', 'success', current_lang))
+                st.json(results)
+            except Exception as e:
+                st.error(f"{config.get_language_text('ui', 'error', current_lang)}: {str(e)}")
+        else:
+            st.warning(config.get_language_text('ui', 'upload_file', current_lang))
 
 def render_settings_page():
-    """Application settings interface"""
-    st.header("⚙️ Application Settings")
+    """Render the settings page with multilingual support"""
+    current_lang = get_current_language()
     
-    # Display current configuration
-    st.subheader("Current Configuration")
-    st.json({
-        "App Version": config.get('app.version'),
-        "Environment": config.get('app.environment'),
-        "Scraper Timeout": config.get('scraper.default_timeout'),
-        "Analyzer Model": config.get('analyzer.model')
-    })
+    st.header(config.get_language_text('ui', 'settings', current_lang))
+    
+    # Language selection
+    st.subheader(config.get_language_text('ui', 'select_language', current_lang))
+    
+    languages = {
+        'ar': 'العربية',
+        'en': 'English'
+    }
+    
+    selected_lang = st.selectbox(
+        config.get_language_text('ui', 'select_language', current_lang),
+        list(languages.keys()),
+        format_func=lambda x: languages[x],
+        index=list(languages.keys()).index(current_lang)
+    )
+    
+    if selected_lang != current_lang:
+        set_language(selected_lang)
+        st.experimental_rerun()
 
 if __name__ == "__main__":
     main()

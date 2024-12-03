@@ -1,35 +1,79 @@
 app:
-  name: AI Web Scraper
-  version: 2.1.0
+  name: "محلل المواقع | AI Web Scraper"
+  version: "2.1.0"
   environment: development
+  languages:
+    default: ar
+    available: [ar, en]
+  rtl: true     # Will be dynamically set based on language
 
 logging:
   console_level: DEBUG
-  file_level: INFO
-  file_name: app.log
+  file_level: DEBUG
+  file_name: dev_app.log
   max_file_size: 10485760  # 10MB
   backup_count: 5
 
 scraper:
   default_timeout: 30
-  headless_mode: true
+  headless_mode: false
   user_agent_rotation: true
   proxy_support: false
+  encoding: utf-8
+  max_retries: 2
+  wait_time: 3
 
 analyzer:
   model: llama3.2
   embedding_model: sentence-transformers/all-mpnet-base-v2
-  chunk_size: 1000
-  chunk_overlap: 200
+  chunk_size: 1500
+  chunk_overlap: 300
+  prompts:
+    ar:
+      summary: "قم بتلخيص النص التالي مع التركيز على النقاط الرئيسية:"
+      technical: "قم بتحليل النص التالي من الناحية التقنية وتحديد المعلومات المهمة:"
+      custom: "قم بتحليل النص التالي حسب الاستعلام المخصص:"
+    en:
+      summary: "Summarize the following text focusing on key points:"
+      technical: "Analyze the following text technically and identify important information:"
+      custom: "Analyze the following text according to the custom query:"
 
 ui:
-  theme: dark
+  theme: light
   accent_color: '#3498db'
   max_results_display: 100
+  fonts:
+    ar: 'Cairo'
+    en: 'Inter'
+  directions:
+    ar: rtl
+    en: ltr
+  translations:
+    ar:
+      app_title: "محلل المواقع"
+      settings: "الإعدادات"
+      analysis: "التحليل"
+      scraping: "استخراج البيانات"
+      export: "تصدير"
+      loading: "جارٍ التحميل..."
+      error: "خطأ"
+      success: "نجاح"
+    en:
+      app_title: "AI Web Scraper"
+      settings: "Settings"
+      analysis: "Analysis"
+      scraping: "Web Scraping"
+      export: "Export"
+      loading: "Loading..."
+      error: "Error"
+      success: "Success"
 
 export:
-  default_format: csv
+  default_format: json
   allowed_formats:
     - csv
     - json
     - excel
+    - parquet
+  file_encoding: utf-8
+  max_rows: 50000

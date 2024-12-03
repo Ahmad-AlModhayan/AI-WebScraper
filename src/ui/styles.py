@@ -59,7 +59,7 @@ def apply_custom_theme():
 
 def sidebar_menu():
     """Create a dynamic sidebar menu"""
-    st.sidebar.title("🌐 AI Web Scraper Pro")
+    st.sidebar.title("🌐 AI Web Scraper")
     
     menu_options = {
         "🏠 Home": "home",

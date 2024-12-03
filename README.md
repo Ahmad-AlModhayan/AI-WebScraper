@@ -1,86 +1,94 @@
-# AI Web Scraper Pro 🌐
+# AI Web Scraper 🌐🤖
 
 ## Overview
-AI Web Scraper Pro is an advanced web scraping and data analysis tool powered by AI technologies. It provides intelligent web content extraction, analysis, and insights generation.
+AI Web Scraper is an advanced, multilingual web scraping tool powered by AI, designed to extract and analyze web content with intelligent capabilities.
 
-## 🚀 Features
-- 🔍 Advanced Web Scraping
-- 📊 AI-Powered Data Analysis
-- 🤖 Llama 3.2 Model Integration
-- 📈 Flexible Configuration
-- 🔒 Secure and Robust
+## 🌟 Features
+- Multilingual Support (Arabic & English)
+- AI-Powered Content Analysis
+- Dynamic Web Scraping
+- Configurable Extraction Strategies
+- Advanced Error Handling
+- Secure and Scalable Architecture
 
-## 🛠 Technologies
+## 🛠 Technology Stack
 - Python 3.10+
 - Streamlit
-- Selenium
-- LangChain
 - Ollama
-- ChromaDB
 - Sentence Transformers
+- LangChain
+- Docker
 
 ## 📦 Prerequisites
 - Docker
 - Docker Compose
-- Ollama (optional, but recommended)
+- Python 3.10+
 
 ## 🚀 Quick Start
 
 ### Local Development
-1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/ai-web-scraper.git
-cd ai-web-scraper
-```
+# Clone the repository
+git clone https://github.com/Ahmad-AlModhayan/AI-WebScraper.git
+cd AI-WebScraper
 
-2. Create virtual environment
-```bash
+# Create virtual environment
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
 
-3. Install dependencies
-```bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-4. Run the application
-```bash
+# Run the application
 streamlit run src/app.py
 ```
 
 ### Docker Deployment
-1. Build and run with Docker Compose
 ```bash
+# Build and run with Docker Compose
 docker-compose up --build
-```
 
-2. Access the application
-- URL: `http://localhost:8501`
+# Access the application
+# Open http://localhost:8501 in your browser
+```
 
 ## 🔧 Configuration
-Customize your deployment using configuration files:
-- `config/development.yml`
-- `config/production.yml`
+- `config/production.yml`: Production settings
+- `config/development.yml`: Development environment configurations
+- Supports dynamic language switching
+- Configurable AI models and scraping parameters
 
-## 🔬 Environment Variables
-- `ENV`: Set environment (`development`/`production`)
-- `OLLAMA_MODEL`: Specify AI model
+## 📊 Project Structure
+```
+AI-WebScraper/
+│
+├── config/                 # Configuration files
+├── data/                   # Data storage
+├── docs/                   # Documentation
+├── logs/                   # Application logs
+├── scripts/                # Utility scripts
+├── src/                    # Source code
+│   ├── core/               # Core scraping logic
+│   ├── ui/                 # User interface
+│   ├── utils/              # Utility modules
+│   └── app.py              # Main application
+├── tests/                  # Unit and integration tests
+├── dockerfile              # Docker configuration
+├── docker-compose.yml      # Multi-container orchestration
+└── requirements.txt        # Python dependencies
+```
 
-## 📋 Project Structure
-```
-ai-web-scraper/
-│
-├── src/
-│   ├── core/          # Scraping and analysis logic
-│   ├── ui/            # User interface components
-│   └── utils/         # Configuration and logging
-│
-├── config/            # Environment configurations
-├── data/              # Data storage
-├── docs/              # Documentation
-└── tests/             # Testing infrastructure
-```
+## 🌐 Multilingual Support
+- Default Language: Arabic
+- Supported Languages: Arabic, English
+- RTL/LTR Layout Adaptation
+- Dynamic Font Selection
+
+## 🔒 Security Features
+- Proxy Support
+- User Agent Rotation
+- Configurable Timeouts
+- Secure Configuration Management
 
 ## 🤝 Contributing
 1. Fork the repository
@@ -89,8 +97,10 @@ ai-web-scraper/
 4. Push to the branch
 5. Create a Pull Request
 
-## 📄 License
+## 📜 License
 MIT License
 
-## 🌟 Support
-Star the project, open issues, or submit pull requests!
+## 🙏 Acknowledgements
+- Ollama AI
+- Streamlit
+- LangChain Community

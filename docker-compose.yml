@@ -1,23 +1,46 @@
 version: '3.8'
 
 services:
-  web_scraper:
+  web:
     build: 
       context: .
-      dockerfile: Dockerfile
+      dockerfile: dockerfile
     ports:
       - "8501:8501"
     volumes:
+      - .:/app
       - ./data:/app/data
       - ./logs:/app/logs
     environment:
-      - ENV=production
-    restart: unless-stopped
+      - OLLAMA_HOST=ollama
+      - APP_LANGUAGE=ar
+      - DEBUG=false
+    depends_on:
+      - ollama
+
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_MODELS=/root/.ollama/models
     deploy:
       resources:
         limits:
-          cpus: '2'
-          memory: 4G
-        reservations:
-          cpus: '1'
-          memory: 2G
+          cpus: '4'
+          memory: 8G
+
+  # Optional: Add monitoring or logging service
+  # prometheus:
+  #   image: prom/prometheus
+  #   volumes:
+  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml
+  #   ports:
+  #     - "9090:9090"
+
+volumes:
+  ollama_data:
+    driver: local
