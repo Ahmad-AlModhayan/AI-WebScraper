@@ -13,7 +13,7 @@ AI Web Scraper is an advanced, multilingual web scraping tool powered by AI, des
 
 ## 🛠 Technology Stack
 - Python 3.10+
-- Streamlit
+- Streamlit 
 - Ollama
 - Sentence Transformers
 - LangChain
