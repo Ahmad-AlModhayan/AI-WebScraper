@@ -12,7 +12,7 @@ webdriver-manager==4.0.1
 
 # AI and Machine Learning
 torch==2.2.1
-transformers==4.38.2
+transformers==4.48.0
 sentence-transformers==2.6.1
 ollama==0.1.7
 langchain==0.1.12
